@@ -1,44 +1,78 @@
-// Allowed emails – replace with your and your girlfriend's email addresses
-const allowedEmails = [
-  "paramasivamsk2811@gmail.com",         // Your email
-  "oneuseonly188@gmail.com"           // Her email
-];
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDOqf8kTgs6Htr5ZeHWtEZldHQcx80zru4",
+  authDomain: "love-space-pr.firebaseapp.com",
+  projectId: "love-space-pr",
+  storageBucket: "love-space-pr.firebasestorage.app",
+  messagingSenderId: "614813452076",
+  appId: "1:614813452076:web:9b8666effa1b33feca0e89",
+  measurementId: "G-N1MCSEHQ26"
+};
 
-// Listen for form submission
-document.getElementById("login-form").addEventListener("submit", function (e) {
-  e.preventDefault();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+// Handle login
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
 
-  // Firebase Auth sign in
-  firebase.auth().signInWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
+  if (!email || !password) {
+    alert("Please fill in both fields.");
+    return;
+  }
 
-      if (allowedEmails.includes(user.email)) {
-        // Show welcome message
-        document.getElementById("welcome-message").classList.remove("hidden");
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    console.log("Login successful");
+    // Redirection will happen below in onAuthStateChanged
+  } catch (error) {
+    console.error("Login failed:", error.message);
+    alert("Login failed: " + error.message);
+  }
+});
 
-        // Hide login form
-        document.getElementById("login-form").classList.add("hidden");
+// After login, check connection status and redirect
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    const userEmail = user.email;
 
-        // Play music after successful login
-        const bgMusic = document.getElementById("bg-music");
-        if (bgMusic) {
-          bgMusic.play().catch((err) => console.log("Autoplay blocked:", err));
+    try {
+      const connectionsRef = db.collection("connections");
+
+      // Check if user is person1
+      const snap1 = await connectionsRef.where("person1Email", "==", userEmail).get();
+      if (!snap1.empty) {
+        const conn = snap1.docs[0].data();
+        if (!conn.person2Verified || !conn.person2Name) {
+          window.location.href = "person-2.html";
+        } else {
+          window.location.href = "dashboard.html";
         }
-
-        // Optional: Redirect to dashboard after a delay
-        // setTimeout(() => window.location.href = "dashboard.html", 3000);
-
-      } else {
-        alert("Access denied! Only we can enter here 💖");
-        firebase.auth().signOut(); // Sign out unauthorized user
+        return;
       }
-    })
-    .catch((error) => {
-      console.error("Login failed:", error);
-      alert("Login failed: " + error.message);
-    });
+
+      // Check if user is person2
+      const snap2 = await connectionsRef.where("partnerEmail", "==", userEmail).get();
+      if (!snap2.empty) {
+        const conn = snap2.docs[0].data();
+        if (!conn.person2Verified || !conn.person2Name) {
+          alert("Please complete your invitation verification first.");
+          auth.signOut();
+        } else {
+          window.location.href = "dashboard.html";
+        }
+        return;
+      }
+
+      // No connection found
+      alert("You haven't created a connection yet.");
+      window.location.href = "newconnection.html";
+
+    } catch (err) {
+      console.error("Error checking connection:", err);
+      alert("Something went wrong. Please try again later.");
+    }
+  }
 });
