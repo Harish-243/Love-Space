@@ -99,14 +99,13 @@ const firebaseConfig = {
 
           auth.currentUser ?.reload().then(() => {
             const user = auth.currentUser ;
-            if (user) {
               db.collection("connections").doc(user.uid).set({
                 person1Email: user.email,
                 emailVerified: true,
                 step: "waiting_for_partner",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               }, { merge: true });
-            }
+        
           });
         })
         .catch((error) => {
@@ -126,11 +125,7 @@ const firebaseConfig = {
         return;
       }
 
-      const user = auth.currentUser ;
-      if (!user) {
-        alert("User  not signed in.");
-        return;
-      }
+     
 
       // Save partner data
       db.collection("connections").doc(user.uid).set({
