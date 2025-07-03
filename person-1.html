@@ -2,91 +2,126 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Invite Your Partner | LoveSpace</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Person 1 - Connection Setup</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  <script src="firebase/firebase.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background: #fff0f5;
+    }
+    #partner-form {
+      display: none;
+      margin-top: 20px;
+    }
+    input {
+      padding: 10px;
+      margin: 10px;
+      width: 80%;
+      max-width: 300px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: hotpink;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-pink-50">
+<body>
+  <h2>Connecting LoveSpace 💖</h2>
+  <p id="status">Verifying your email...</p>
 
-  <div class="bg-white p-8 rounded-lg shadow-md max-w-sm w-full text-center">
-    <h1 class="text-xl font-bold text-pink-700 mb-4">Invite Your Partner 💑</h1>
-
-    <p id="verify-msg" class="text-sm text-gray-700 mb-4">Checking your verification status...</p>
-
-    <div id="invite-form" class="hidden">
-      <input type="text" id="partnerName" placeholder="Partner's Name" class="w-full p-2 mb-3 border rounded" />
-      <input type="email" id="partnerEmail" placeholder="Partner's Email" class="w-full p-2 mb-4 border rounded" />
-      <button onclick="sendPartnerInvite()" class="bg-pink-600 text-white w-full p-2 rounded hover:bg-pink-700">
-        Send Invite
-      </button>
-    </div>
-
-    <p id="status" class="text-sm text-gray-600 mt-4"></p>
+  <div id="partner-form">
+    <h3>Step 2: Enter Your Partner's Details</h3>
+    <input type="text" id="partnerName" placeholder="Partner's Name" /><br>
+    <input type="email" id="partnerEmail" placeholder="Partner's Email" /><br>
+    <button onclick="sendPartnerInvite()">Send Verification to Partner</button>
   </div>
 
   <script>
+    // Firebase Config
+    const firebaseConfig = {
+  apiKey: "AIzaSyDOqf8kTgs6Htr5ZeHWtEZldHQcx80zru4",
+  authDomain: "love-space-pr.firebaseapp.com",
+  projectId: "love-space-pr",
+  storageBucket: "love-space-pr.firebasestorage.app",
+  messagingSenderId: "614813452076",
+  appId: "1:614813452076:web:9b8666effa1b33feca0e89",
+  measurementId: "G-N1MCSEHQ26"
+};
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const uid = new URLSearchParams(window.location.search).get("uid");
-    let person1Email = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const actionCode = urlParams.get('oobCode');
 
-    auth.onAuthStateChanged(async (user) => {
-      if (user && user.uid === uid) {
-        person1Email = user.email;
-        await user.reload();
+    if (mode === 'verifyEmail' && actionCode) {
+      auth.applyActionCode(actionCode)
+        .then(() => {
+          document.getElementById('status').innerText = "Email verified successfully!";
+          document.getElementById('partner-form').style.display = 'block';
 
-        if (user.emailVerified) {
-          document.getElementById("verify-msg").innerText = "You're verified! 🎉 Now invite your partner.";
-          document.getElementById("invite-form").classList.remove("hidden");
-
-          // Update Firestore: mark person1 as verified
-          await db.collection("pending_connections").doc(uid).update({
-            "person1.verified": true,
-            status: "awaiting-person2-verification"
+          auth.currentUser?.reload().then(() => {
+            const user = auth.currentUser;
+            if (user) {
+              db.collection("connections").doc(user.uid).set({
+                person1Email: user.email,
+                emailVerified: true,
+                step: "waiting_for_partner",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              }, { merge: true });
+            }
           });
+        })
+        .catch((error) => {
+          console.error("Email verification error:", error);
+          document.getElementById('status').innerText = "Invalid or expired verification link.";
+        });
+    } else {
+      document.getElementById('status').innerText = "Invalid verification request.";
+    }
 
-        } else {
-          document.getElementById("verify-msg").innerText = "Please verify your email first. Check your inbox!";
-        }
-      } else {
-        document.getElementById("verify-msg").innerText = "Unauthorized. Please login again.";
-      }
-    });
-
-    async function sendPartnerInvite() {
-      const partnerName = document.getElementById("partnerName").value.trim();
-      const partnerEmail = document.getElementById("partnerEmail").value.trim();
-      const status = document.getElementById("status");
+    function sendPartnerInvite() {
+      const partnerName = document.getElementById('partnerName').value;
+      const partnerEmail = document.getElementById('partnerEmail').value;
 
       if (!partnerName || !partnerEmail) {
-        status.innerText = "Please fill in both fields.";
+        alert("Please fill in both fields.");
         return;
       }
 
-      try {
-        // Save partner info
-        await db.collection("pending_connections").doc(uid).update({
-          person2: {
-            name: partnerName,
-            email: partnerEmail,
-            verified: false
-          },
-          inviteLink: `${window.location.origin}/person-2.html?uid=${uid}`,
-          status: "invitation-sent"
-        });
-
-        // Send custom email manually via backend (Node.js/email server),
-        // For now just show the link to simulate.
-        status.innerHTML = `Invitation link: <a href="person-2.html?uid=${uid}" class="text-blue-600 underline">person-2.html?uid=${uid}</a> <br/> Send this to your partner.`;
-
-      } catch (error) {
-        status.innerText = "Error sending invite: " + error.message;
+      const user = auth.currentUser;
+      if (!user) {
+        alert("User not signed in.");
+        return;
       }
+
+      // Save partner data
+      db.collection("connections").doc(user.uid).set({
+        partnerName: partnerName,
+        partnerEmail: partnerEmail,
+        step: "waiting_for_partner_verification"
+      }, { merge: true }).then(() => {
+        // Send invite to person-2
+        auth.sendSignInLinkToEmail(partnerEmail, {
+          url: "https://harish-243.github.io/Love-Space/person-2.html",
+          handleCodeInApp: true
+        }).then(() => {
+          alert("Invitation sent to your partner!");
+          document.getElementById('status').innerText = "Waiting for your partner to verify...";
+          document.getElementById('partner-form').style.display = 'none';
+        }).catch((err) => {
+          console.error("Failed to send invite:", err);
+          alert("Failed to send email to partner.");
+        });
+      });
     }
   </script>
 </body>
