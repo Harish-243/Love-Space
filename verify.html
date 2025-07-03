@@ -1,133 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Quiz Result Viewer</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Email Verified</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="firebase/firebase.js"></script>
 </head>
-<body class="bg-gradient-to-br from-blue-100 to-pink-100 min-h-screen p-4">
-  <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6" id="resultSection">
-    <h1 class="text-3xl font-bold text-center text-purple-700 mb-4">📝 Quiz Comparison Results</h1>
-    
-    <div class="flex justify-between items-center mb-4">
-      <select id="dateSelector" class="border p-2 rounded-lg">
-        <option disabled selected>Select Date</option>
-      </select>
-      <button id="downloadBtn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-        ⬇️ Download PDF
-      </button>
-    </div>
+<body>
+  <h2>Verifying your email...</h2>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const oobCode = params.get('oobCode');
 
-    <div id="matchScore" class="text-center font-semibold text-xl text-pink-700 mb-4"></div>
-    <div id="comparisonTable" class="overflow-x-auto"></div>
-    <p class="text-sm text-gray-500 text-center mt-4">Only visible if both submitted on selected date 💌</p>
-  </div>
-<script>
-  const db = firebase.database();
-  const auth = firebase.auth();
-  const dateSelector = document.getElementById("dateSelector");
-  const today = new Date();
+    if (mode === 'verifyEmail' && oobCode) {
+      firebase.auth().applyActionCode(oobCode)
+        .then(() => {
+          alert("Email verified successfully!");
 
-  function formatDate(d) {
-    return d.toISOString().split("T")[0];
-  }
+          // Get the current user and update Firestore
+          firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+              const uid = user.uid;
 
-  function getPastNDates(n) {
-    const dates = [];
-    for (let i = 0; i < n; i++) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      dates.push(formatDate(d));
+              // Update verified status in Firestore
+              await firebase.firestore().collection("pending_connections").doc(uid).update({
+                "person1.verified": true
+              });
+
+              // Redirect to person-1.html to add partner details
+              window.location.href = `person-1.html?uid=${uid}`;
+            }
+          });
+        })
+        .catch((error) => {
+          console.error("Verification failed:", error);
+          alert("Invalid or expired link.");
+        });
+    } else {
+      alert("Invalid link.");
     }
-    return dates;
-  }
-
-  getPastNDates(7).forEach(date => {
-    const option = document.createElement("option");
-    option.value = date;
-    option.text = date === formatDate(new Date()) ? "Today" :
-                  date === formatDate(new Date(Date.now() - 86400000)) ? "Yesterday" :
-                  date;
-    dateSelector.appendChild(option);
-  });
-
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      alert("Login required");
-      window.location.href = "index.html";
-      return;
-    }
-
-    const currentEmail = user.email;
-    const safeCurrent = currentEmail.replace(/\./g, "_");
-
-    // Get partner email from Firebase
-    const partnerSnap = await db.ref(`partners/${safeCurrent}`).get();
-    if (!partnerSnap.exists()) {
-      alert("No partner assigned. Please check with admin.");
-      return;
-    }
-
-    const partnerEmail = partnerSnap.val();
-    const safePartner = partnerEmail.replace(/\./g, "_");
-
-    async function loadQuizResult(date) {
-      const [snap1, snap2] = await Promise.all([
-        db.ref(`quizResults/${safeCurrent}/${date}`).get(),
-        db.ref(`quizResults/${safePartner}/${date}`).get()
-      ]);
-
-      if (!snap1.exists() || !snap2.exists()) {
-        document.getElementById("comparisonTable").innerHTML = `<div class="text-center text-red-500 font-semibold text-lg">One or both of you haven’t submitted on ${date}</div>`;
-        document.getElementById("matchScore").innerText = "";
-        return;
-      }
-
-      const a1 = snap1.val().answers;
-      const a2 = snap2.val().answers;
-
-      let matchCount = 0;
-      let tableHTML = `
-        <table class="table-auto w-full text-center border border-gray-300 rounded-lg overflow-hidden shadow">
-          <thead class="bg-pink-200 text-pink-800">
-            <tr>
-              <th class="p-2">Q</th>
-              <th class="p-2">${currentEmail}</th>
-              <th class="p-2">${partnerEmail}</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-      for (let i = 0; i < a1.length; i++) {
-        const match = a1[i] === a2[i];
-        if (match) matchCount++;
-        tableHTML += `
-          <tr class="${match ? 'bg-green-100' : 'bg-red-100'}">
-            <td class="p-2 font-semibold">Q${i + 1}</td>
-            <td class="p-2">${a1[i]}</td>
-            <td class="p-2">${a2[i]}</td>
-          </tr>`;
-      }
-
-      tableHTML += `</tbody></table>`;
-      document.getElementById("comparisonTable").innerHTML = tableHTML;
-      document.getElementById("matchScore").innerHTML = `Match Score: <strong>${matchCount}/${a1.length}</strong> (${Math.round((matchCount / a1.length) * 100)}% 💖)`;
-    }
-
-    dateSelector.addEventListener("change", () => {
-      loadQuizResult(dateSelector.value);
-    });
-
-    document.getElementById("downloadBtn").addEventListener("click", () => {
-      const element = document.getElementById("resultSection");
-      html2pdf().from(element).save(`Quiz_Result_${dateSelector.value}.pdf`);
-    });
-  });
-</script>
+  </script>
 </body>
 </html>
