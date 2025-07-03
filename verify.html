@@ -1,13 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Email Verified</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifying Email | LoveSpace</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   <script src="firebase/firebase.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffe4ec;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .status {
+      font-size: 1.2rem;
+      color: #d5006d;
+    }
+  </style>
 </head>
 <body>
-  <h2>Verifying your email...</h2>
+  <div class="card">
+    <h2 class="status">Verifying your email...</h2>
+  </div>
+
   <script>
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
@@ -16,29 +46,33 @@
     if (mode === 'verifyEmail' && oobCode) {
       firebase.auth().applyActionCode(oobCode)
         .then(() => {
-          alert("Email verified successfully!");
-
-          // Get the current user and update Firestore
+          document.querySelector('.status').textContent = "Email verified! Redirecting...";
+          
+          // Wait for user to be signed in
           firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
               const uid = user.uid;
 
-              // Update verified status in Firestore
+              // Mark person-1 as verified in Firestore
               await firebase.firestore().collection("pending_connections").doc(uid).update({
                 "person1.verified": true
               });
 
-              // Redirect to person-1.html to add partner details
-              window.location.href = `person-1.html?uid=${uid}`;
+              // Redirect to person-1.html with uid
+              setTimeout(() => {
+                window.location.href = `person-1.html?uid=${uid}`;
+              }, 2000);
+            } else {
+              document.querySelector('.status').textContent = "Please log in first to complete verification.";
             }
           });
         })
         .catch((error) => {
           console.error("Verification failed:", error);
-          alert("Invalid or expired link.");
+          document.querySelector('.status').textContent = "Verification failed. Link may be expired or already used.";
         });
     } else {
-      alert("Invalid link.");
+      document.querySelector('.status').textContent = "Invalid verification link.";
     }
   </script>
 </body>
