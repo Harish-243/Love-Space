@@ -1,0 +1,101 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #ffc0cb, #ffe4e1);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.container {
+  text-align: center;
+  position: relative;
+}
+
+.login-box {
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 30px 40px;
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(255, 105, 180, 0.3);
+  max-width: 400px;
+  width: 90%;
+  animation: slideIn 1s ease;
+}
+
+.login-box h2 {
+  color: #d63384;
+  margin-bottom: 20px;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 2px solid #f8c1d1;
+  border-radius: 10px;
+  outline: none;
+  font-size: 16px;
+}
+
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  background: #ff69b4;
+  border: none;
+  color: white;
+  font-size: 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-box button:hover {
+  background: #ff1493;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+/* Floating hearts */
+body::before {
+  content: "💖 💕 💘 💓 💞 💗";
+  font-size: 30px;
+  position: absolute;
+  animation: floatHearts 20s linear infinite;
+  white-space: nowrap;
+  opacity: 0.2;
+  top: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+
+@keyframes floatHearts {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100vh);
+  }
+}
