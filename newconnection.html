@@ -46,22 +46,21 @@
 
         await user.sendEmailVerification();
 
-        await db.collection("pending_connections").doc(user.uid).set({
-          person1: {
-            name: name,
-            email: email,
-            verified: false
-          },
-          status: "awaiting-person1-verification",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+await db.collection("pending_connections").doc(user.uid).set({
+  person1: {
+    name: name,
+    email: email,
+    verified: false
+  },
+  status: "awaiting-person1-verification",
+  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+});
 
-        document.getElementById("msg").innerText = "Verification email sent! Please check your inbox.";
-        
-        // Wait 2 seconds then redirect
-        setTimeout(() => {
-          window.location.href = `person-1.html?uid=${user.uid}`;
-        }, 2000);
+document.getElementById("msg").innerText = "Verification email sent! Please check your inbox.";
+
+setTimeout(() => {
+  window.location.href = "index.html"; // ✅ REDIRECT to login
+}, 2000);
 
       } catch (error) {
         document.getElementById("msg").innerText = error.message;
