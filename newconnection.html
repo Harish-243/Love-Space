@@ -40,31 +40,35 @@
         return;
       }
 
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+    try {
+  const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+  const user = userCredential.user;
+  console.log("User created:", user);
 
-        await user.sendEmailVerification();
+  await user.sendEmailVerification();
+  console.log("Verification email sent");
 
-await db.collection("pending_connections").doc(user.uid).set({
-  person1: {
-    name: name,
-    email: email,
-    verified: false
-  },
-  status: "awaiting-person1-verification",
-  createdAt: firebase.firestore.FieldValue.serverTimestamp()
-});
+  await db.collection("pending_connections").doc(user.uid).set({
+    person1: {
+      name: name,
+      email: email,
+      verified: false
+    },
+    status: "awaiting-person1-verification",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  console.log("Firestore entry created");
 
-document.getElementById("msg").innerText = "Verification email sent! Please check your inbox.";
+  document.getElementById("msg").innerText = "Verification email sent! Please check your inbox.";
 
-setTimeout(() => {
-  window.location.href = "index.html"; // ✅ REDIRECT to login
-}, 2000);
-
-      } catch (error) {
-        document.getElementById("msg").innerText = error.message;
-      }
+  setTimeout(() => {
+    console.log("Redirecting to index.html...");
+    window.location.href = "index.html";
+  }, 2000);
+} catch (error) {
+  console.error("Registration error:", error);
+  document.getElementById("msg").innerText = error.message;
+}
     }
   </script>
 </body>
