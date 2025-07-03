@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Our Private Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="firebase/firebase.js"></script>
+
+  <style>
+    .font-dancing {
+      font-family: 'Dancing Script', cursive;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-pink-50 to-blue-50 min-h-screen flex items-center justify-center">
+
+  <div class="max-w-3xl w-full p-8 bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-pink-200">
+    <!-- Welcome -->
+    <div class="text-center mb-10">
+      <h1 class="text-4xl font-dancing text-pink-600 mb-2">Welcome to Our Space 💑</h1>
+      <p class="text-gray-600">Let’s cherish memories and grow together!</p>
+    </div>
+
+    <!-- Dashboard Items -->
+    <div class="grid grid-cols-2 gap-6 text-center text-white font-medium text-lg">
+      <a href="quiz.html" class="bg-pink-400 hover:bg-pink-500 p-6 rounded-xl shadow-md">💡 Daily Quiz</a>
+      <a href="mood.html" class="bg-blue-400 hover:bg-blue-500 p-6 rounded-xl shadow-md">💖 Emotional Rating</a>
+      <a href="problems.html" class="bg-red-400 hover:bg-red-500 p-6 rounded-xl shadow-md">📝 Share Problem</a>
+      <a href="calendar.html" class="bg-purple-400 hover:bg-purple-500 p-6 rounded-xl shadow-md">📅 Calendar & Reminders</a>
+      <a href="memories.html" class="bg-green-400 hover:bg-green-500 p-6 rounded-xl shadow-md">📸 Our Memories</a>
+      <a href="journey.html" class="bg-yellow-400 hover:bg-yellow-500 p-6 rounded-xl shadow-md">📖 Our Journey</a>
+    </div>
+
+    <!-- Logout -->
+    <div class="mt-10 text-center">
+      <button id="logout-btn" class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg text-sm font-semibold text-gray-700 shadow">
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Background Music -->
+  <audio id="bg-music" autoplay loop>
+    <source src="assets/music/love-theme.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script>
+    // Start music once page loads
+    const music = document.getElementById('bg-music');
+    music.volume = 0.3;
+
+    // Logout button
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "index.html"; // or your login page
+      }).catch((error) => {
+        alert("Logout failed: " + error.message);
+      });
+    });
+  </script>
+</body>
+</html>

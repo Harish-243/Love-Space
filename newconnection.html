@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Start New Connection | LoveSpace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="firebase/firebase.js"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-pink-100">
+
+  <div class="bg-white p-8 rounded-lg shadow-md max-w-sm w-full text-center">
+    <h1 class="text-2xl font-bold text-pink-700 mb-4">Start Your Connection 💖</h1>
+
+    <input type="text" id="name" placeholder="Your Name" class="w-full p-2 mb-3 border rounded" />
+    <input type="email" id="email" placeholder="Your Email" class="w-full p-2 mb-3 border rounded" />
+    <input type="password" id="password" placeholder="Create a Password" class="w-full p-2 mb-4 border rounded" />
+
+    <button onclick="registerPerson1()" class="bg-pink-600 text-white w-full p-2 rounded hover:bg-pink-700">
+      Verify Email & Continue
+    </button>
+
+    <p id="msg" class="text-sm text-gray-600 mt-4"></p>
+  </div>
+
+  <script>
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    async function registerPerson1() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!name || !email || !password) {
+        document.getElementById("msg").innerText = "Please fill in all fields.";
+        return;
+      }
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        await user.sendEmailVerification();
+
+        await db.collection("pending_connections").doc(user.uid).set({
+          person1: {
+            name: name,
+            email: email,
+            verified: false
+          },
+          status: "awaiting-person1-verification",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById("msg").innerText = "Verification email sent! Please check your inbox.";
+        
+        // Wait 2 seconds then redirect
+        setTimeout(() => {
+          window.location.href = `person-1.html?uid=${user.uid}`;
+        }, 2000);
+
+      } catch (error) {
+        document.getElementById("msg").innerText = error.message;
+      }
+    }
+  </script>
+</body>
+</html>

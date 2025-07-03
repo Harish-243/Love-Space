@@ -1,0 +1,119 @@
+<!-- quiz.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Daily Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-pink-50 min-h-screen flex flex-col items-center justify-center font-sans">
+  <div class="bg-white shadow-xl rounded-xl p-8 w-full max-w-2xl">
+    <h1 class="text-2xl font-bold text-center text-pink-600 mb-6">💑 Daily Relationship Quiz</h1>
+
+    <form id="quizForm" class="space-y-6"></form>
+
+    <button id="submitBtn" class="w-full bg-pink-500 text-white py-2 px-4 rounded-lg hover:bg-pink-600">Submit Quiz</button>
+
+    <p id="status" class="mt-4 text-center text-green-600 hidden">✅ Submitted successfully!</p>
+  </div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+  apiKey: "AIzaSyB5UBhCAuk1gvW5uTsmnvcbUJuofFurX9w",
+  authDomain: "personal-pr-243.firebaseapp.com",
+  projectId: "personal-pr-243",
+  storageBucket: "personal-pr-243.firebasestorage.app",
+  messagingSenderId: "556106311668",
+  appId: "1:556106311668:web:4a69a66ed20e242d27fba1",
+  measurementId: "G-YFMYQMKTF6"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // List of 20 questions
+    const allQuestions = [
+      "How calm were we today?",
+      "Did we understand each other’s feelings?",
+      "Did we resolve disagreements peacefully?",
+      "Were we kind in our words?",
+      "Did we listen to each other?",
+      "Did we hug or touch lovingly?",
+      "Did we trust each other today?",
+      "Did we feel emotionally close?",
+      "Did we respect each other’s space?",
+      "How appreciated did I feel?",
+      "Did we have fun today?",
+      "Did we avoid unnecessary fights?",
+      "Did I make you smile today?",
+      "How patient were we with each other?",
+      "Did we spend quality time?",
+      "Did I say something hurtful?",
+      "Was I emotionally available today?",
+      "Did we support each other today?",
+      "Was I a good partner today?",
+      "Did we argue too much?"
+    ];
+
+    // Shuffle and take 10
+    function getRandomQuestions(arr, n) {
+      const shuffled = arr.sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, n);
+    }
+
+    const selectedQuestions = getRandomQuestions(allQuestions, 10);
+
+    // Populate form
+    const form = document.getElementById("quizForm");
+    selectedQuestions.forEach((question, index) => {
+      const qId = `q${index}`;
+      const html = `
+        <div>
+          <p class="font-semibold text-gray-700">${index + 1}. ${question}</p>
+          <div class="flex gap-2 mt-2 mb-2">
+            ${[1, 2, 3, 4, 5].map(i => `
+              <label>
+                <input type="radio" name="${qId}" value="${i}" required />
+                <span class="ml-1">${i}</span>
+              </label>
+            `).join('')}
+          </div>
+          <textarea name="${qId}_comment" rows="2" placeholder="Comment (optional)" class="w-full p-2 border rounded-md"></textarea>
+        </div>`;
+      form.insertAdjacentHTML('beforeend', html);
+    });
+
+    // Submit handler
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (!user) return alert("Please log in!");
+
+      const answers = selectedQuestions.map((q, i) => {
+        const rating = document.querySelector(`input[name="q${i}"]:checked`)?.value || null;
+        const comment = document.querySelector(`textarea[name="q${i}_comment"]`)?.value || "";
+        return { question: q, rating: parseInt(rating), comment };
+      });
+
+      const dateKey = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+      await db.collection("dailyQuizzes").add({
+        user: user.email,
+        date: dateKey,
+        answers: answers,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      document.getElementById("status").classList.remove("hidden");
+      document.getElementById("submitBtn").disabled = true;
+    });
+
+    // Auth check
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
