@@ -2,92 +2,114 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Accept Invitation | LoveSpace</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Person 2 - Confirm Connection</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  <script src="firebase/firebase.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background: #fff0f5;
+    }
+    #nameForm {
+      display: none;
+    }
+    input {
+      padding: 10px;
+      margin: 10px;
+      width: 80%;
+      max-width: 300px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: hotpink;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-pink-100">
+<body>
+  <h2>Welcome to LoveSpace 💞</h2>
+  <p id="status">Verifying your email...</p>
 
-  <div class="bg-white p-6 rounded-lg shadow-md max-w-sm w-full text-center">
-    <h2 class="text-xl font-bold text-pink-700 mb-3">You're Invited 💌</h2>
-    <p id="inviter" class="text-sm text-gray-600 mb-4">Loading invite details...</p>
-
-    <div id="partner-form" class="hidden">
-      <input type="text" id="partnerName" placeholder="Your Name" class="w-full p-2 mb-3 border rounded" />
-      <button onclick="acceptInvite()" class="bg-pink-600 text-white w-full p-2 rounded hover:bg-pink-700">
-        Accept Invitation
-      </button>
-    </div>
-
-    <p id="status" class="text-sm text-gray-600 mt-4"></p>
+  <div id="nameForm">
+    <h3>Enter Your Name</h3>
+    <input type="text" id="person2Name" placeholder="Your Name" /><br>
+    <button onclick="submitName()">Complete Connection</button>
   </div>
 
   <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const uid = new URLSearchParams(window.location.search).get("uid");
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const actionCode = urlParams.get('oobCode');
 
-    let partnerEmail = null;
-
-    async function fetchInvitation() {
-      try {
-        const doc = await db.collection("pending_connections").doc(uid).get();
-
-        if (!doc.exists) {
-          document.getElementById("inviter").innerText = "Invalid or expired invitation.";
-          return;
-        }
-
-        const data = doc.data();
-        const p1 = data.person1;
-        const p2 = data.person2;
-
-        partnerEmail = p2.email;
-
-        document.getElementById("inviter").innerHTML = `
-          <strong>${p1.name}</strong> (${p1.email}) invited you to join LoveSpace. <br/>
-          Your email: <strong>${p2.email}</strong>
-        `;
-
-        document.getElementById("partner-form").classList.remove("hidden");
-
-      } catch (err) {
-        document.getElementById("inviter").innerText = "Error loading invite.";
-      }
+    if (mode === 'signIn' && actionCode) {
+      auth.signInWithEmailLink(window.location.href)
+        .then((result) => {
+          const user = result.user;
+          document.getElementById("status").innerText = "Email verified successfully!";
+          document.getElementById("nameForm").style.display = "block";
+        })
+        .catch((error) => {
+          console.error("Verification failed", error);
+          document.getElementById("status").innerText = "Invalid or expired verification link.";
+        });
+    } else {
+      document.getElementById("status").innerText = "Invalid request.";
     }
 
-    async function acceptInvite() {
-      const name = document.getElementById("partnerName").value.trim();
-      const status = document.getElementById("status");
+    function submitName() {
+      const name = document.getElementById('person2Name').value;
+      const user = auth.currentUser;
 
-      if (!name) {
-        status.innerText = "Please enter your name.";
+      if (!name || !user) {
+        alert("Please enter your name.");
         return;
       }
 
-      try {
-        // Update Firestore
-        await db.collection("pending_connections").doc(uid).update({
-          "person2.name": name,
-          "person2.verified": true,
-          status: "connected",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      // Search for connection using email
+      db.collection("connections")
+        .where("partnerEmail", "==", user.email)
+        .get()
+        .then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            alert("Connection not found.");
+            return;
+          }
+
+          const doc = querySnapshot.docs[0];
+          const connectionRef = db.collection("connections").doc(doc.id);
+
+          connectionRef.update({
+            person2Name: name,
+            person2Verified: true,
+            step: "connected",
+            connectedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(() => {
+            alert("Connection completed successfully!");
+            window.location.href = "dashboard.html"; // change to your actual dashboard URL
+          });
+        })
+        .catch((error) => {
+          console.error("Error completing connection:", error);
+          alert("Something went wrong.");
         });
-
-        // Move to shared dashboard (replace with actual dashboard file)
-        window.location.href = `dashboard.html?uid=${uid}`;
-
-      } catch (error) {
-        status.innerText = "Error accepting invitation: " + error.message;
-      }
     }
-
-    fetchInvitation();
   </script>
 </body>
 </html>
