@@ -4,26 +4,87 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Start New Connection | LoveSpace</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   <script src="firebase/firebase.js"></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    .font-dancing-script {
+      font-family: 'Dancing Script', cursive;
+    }
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      25%, 75% { transform: scale(1.05); }
+      50% { transform: scale(1.1); }
+    }
+    .heartbeat {
+      animation: heartbeat 1.8s infinite;
+    }
+  </style>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-pink-100">
+<body class="bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 min-h-screen flex items-center justify-center relative overflow-hidden">
 
-  <div class="bg-white p-8 rounded-lg shadow-md max-w-sm w-full text-center">
-    <h1 class="text-2xl font-bold text-pink-700 mb-4">Start Your Connection 💖</h1>
+  <!-- Floating hearts animation -->
+  <div class="absolute inset-0 pointer-events-none z-0">
+    <div class="animate-ping absolute top-10 left-10 w-10 h-10 bg-pink-300 rounded-full opacity-30"></div>
+    <div class="animate-ping absolute bottom-10 right-10 w-8 h-8 bg-purple-300 rounded-full opacity-30"></div>
+  </div>
 
-    <input type="text" id="name" placeholder="Your Name" class="w-full p-2 mb-3 border rounded" />
-    <input type="email" id="email" placeholder="Your Email" class="w-full p-2 mb-3 border rounded" />
-    <input type="password" id="password" placeholder="Create a Password" class="w-full p-2 mb-4 border rounded" />
+  <div class="max-w-md w-full p-8 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-pink-200 relative z-10">
+    
+    <div class="text-center mb-6">
+      <div class="flex justify-center">
+        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4452b07d-3eac-4e42-b70f-933c8634d543.png"
+             alt="Love Logo" class="w-20 h-20 object-cover rounded-full border-4 border-pink-300 shadow-md" />
+      </div>
+      <h1 class="text-4xl font-dancing-script font-bold mt-3 bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+        Start Our Connection
+      </h1>
+      <p class="text-gray-500">Begin your love story 💌</p>
+    </div>
 
-    <button onclick="registerPerson1()" class="bg-pink-600 text-white w-full p-2 rounded hover:bg-pink-700">
+    <div class="space-y-4">
+      <input type="text" id="name" placeholder="Your Name"
+             class="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-pink-400 focus:border-pink-400 placeholder-gray-400 transition-all duration-300 hover:shadow-lg"/>
+
+      <input type="email" id="email" placeholder="Your Email"
+             class="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-pink-400 focus:border-pink-400 placeholder-gray-400 transition-all duration-300 hover:shadow-lg"/>
+
+      <input type="password" id="password" placeholder="Create a Password"
+             class="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-pink-400 focus:border-pink-400 placeholder-gray-400 transition-all duration-300 hover:shadow-lg"/>
+    </div>
+
+    <button onclick="registerPerson1()"
+            class="mt-6 w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-semibold text-white bg-gradient-to-r from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400 transition-all duration-300 heartbeat">
       Verify Email & Continue
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
+      </svg>
     </button>
 
-    <p id="msg" class="text-sm text-gray-600 mt-4"></p>
+    <p id="msg" class="text-sm text-center text-gray-600 mt-4"></p>
+
+    <!-- Back to login -->
+    <div class="mt-6 text-center">
+      <p class="text-sm text-gray-600">
+        Already have a connection?
+        <a href="index.html" class="ml-1 font-semibold text-pink-600 hover:text-pink-700 underline transition duration-200">
+          Enter Our Secret Garden 🌸
+        </a>
+      </p>
+    </div>
   </div>
 
   <script>
@@ -35,40 +96,37 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
+      const msg = document.getElementById("msg");
       if (!name || !email || !password) {
-        document.getElementById("msg").innerText = "Please fill in all fields.";
+        msg.innerText = "Please fill in all fields.";
         return;
       }
 
-    try {
-  const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-  const user = userCredential.user;
-  console.log("User created:", user);
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
 
-  await user.sendEmailVerification();
-  console.log("Verification email sent");
+        await user.sendEmailVerification();
 
-  await db.collection("pending_connections").doc(user.uid).set({
-    person1: {
-      name: name,
-      email: email,
-      verified: false
-    },
-    status: "awaiting-person1-verification",
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  console.log("Firestore entry created");
+        await db.collection("pending_connections").doc(user.uid).set({
+          person1: {
+            name: name,
+            email: email,
+            verified: false
+          },
+          status: "awaiting-person1-verification",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-  document.getElementById("msg").innerText = "Verification email sent! Please check your inbox.";
+        msg.innerText = "Verification email sent! Please check your inbox.";
 
-  setTimeout(() => {
-    console.log("Redirecting to index.html...");
-    window.location.href = "index.html";
-  }, 2000);
-} catch (error) {
-  console.error("Registration error:", error);
-  document.getElementById("msg").innerText = error.message;
-}
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 2000);
+      } catch (error) {
+        msg.innerText = error.message;
+        console.error("Registration error:", error);
+      }
     }
   </script>
 </body>
