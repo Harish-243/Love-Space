@@ -2,114 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | LoveSpace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Only Us | Your Private Love Space</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   <script src="firebase/firebase.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;500&display=swap');
-    
-    .heart-bubble {
-      position: absolute;
-      font-size: 1.5rem;
-      animation: float-up 8s linear infinite;
-      filter: drop-shadow(0 0 10px rgba(255, 20, 147, 0.5));
-    }
-    
-    @keyframes float-up {
-      0% {
-        transform: translateY(100vh) scale(0.5);
-        opacity: 0;
-      }
-      20% {
-        opacity: 0.8;
-      }
-      80% {
-        opacity: 0.8;
-      }
-      100% {
-        transform: translateY(-20vh) scale(1.2);
-        opacity: 0;
-      }
-    }
 
+  <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #f8c8d0, #e0f7fa);
     }
-
-    .login-container {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      border-radius: 1rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .login-title {
+    .font-dancing-script {
       font-family: 'Dancing Script', cursive;
-      color: #d5006d;
     }
-
-    .input-field {
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      padding: 0.75rem;
-      transition: border-color 0.3s;
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      25%, 75% { transform: scale(1.05); }
+      50% { transform: scale(1.1); }
     }
-
-    .input-field:focus {
-      border-color: #d5006d;
-      outline: none;
-    }
-
-    .login-button {
-      background-color: #d5006d;
-      transition: background-color 0.3s;
-    }
-
-    .login-button:hover {
-      background-color: #c51162;
+    .heartbeat {
+      animation: heartbeat 1.8s infinite;
     }
   </style>
 </head>
-<body class="flex justify-center items-center min-h-screen relative">
-  <div class="login-container p-8 max-w-sm w-full text-center">
-    <h1 class="text-3xl font-bold login-title mb-4">Welcome to LoveSpace 💖</h1>
+<body class="bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 min-h-screen flex items-center justify-center relative overflow-hidden">
 
-    <input type="email" id="email" placeholder="Email" class="input-field w-full mb-2" />
-    <input type="password" id="password" placeholder="Password" class="input-field w-full mb-4" />
-
-    <button id="login-btn" class="login-button text-white w-full p-2 rounded">
-      Login
-    </button>
-
-    <p class="text-sm mt-4">
-      New here? 
-      <a href="newconnection.html" class="text-pink-600 underline">Start New Connection</a>
-    </p>
+  <!-- Floating hearts animation -->
+  <div class="absolute inset-0 pointer-events-none">
+    <div class="animate-ping absolute top-10 left-10 w-10 h-10 bg-pink-300 rounded-full opacity-30"></div>
+    <div class="animate-ping absolute bottom-10 right-10 w-8 h-8 bg-blue-300 rounded-full opacity-30"></div>
   </div>
 
-  <div id="hearts-container" class="fixed inset-0 overflow-hidden pointer-events-none z-0"></div>
+  <div class="max-w-md w-full p-8 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-pink-200 relative z-10">
+    
+    <div class="text-center mb-6">
+      <div class="flex justify-center">
+        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4452b07d-3eac-4e42-b70f-933c8634d543.png"
+             alt="Love Logo" class="w-20 h-20 object-cover rounded-full border-4 border-pink-300 shadow-md" />
+      </div>
+      <h1 class="text-4xl font-dancing-script font-bold mt-3 bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+        Only Us
+      </h1>
+      <p class="text-gray-500">Your private space of love 💖</p>
+    </div>
 
-  
+    <form id="login-form" class="space-y-6">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Your Email</label>
+        <input type="email" id="email" required
+               class="mt-1 block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-pink-400 focus:border-pink-400 placeholder-gray-400 transition-all duration-300 hover:shadow-lg"
+               placeholder="love@example.com">
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+        <input type="password" id="password" required autocomplete="current-password"
+               class="mt-1 block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-pink-400 focus:border-pink-400 placeholder-gray-400 transition-all duration-300 hover:shadow-lg"
+               placeholder="••••••••">
+      </div>
+
+      <div>
+        <button type="submit" id="login-btn"
+                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-semibold text-white bg-gradient-to-r from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400 transition-all duration-300 heartbeat">
+          Enter Our Secret Garden
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
+          </svg>
+        </button>
+      </div>
+
+<!-- Signup / New Connection link -->
+<div class="mt-6 text-center">
+  <p class="text-sm text-gray-600">
+    First time here, my love?
+    <a href="newconnection.html" class="ml-1 font-semibold text-pink-600 hover:text-pink-700 underline transition duration-200">
+      Start Our Journey 💌
+    </a>
+  </p>
+</div>
+
+<div id="welcome-message" class="hidden mt-6 p-4 bg-pink-50 rounded-xl text-center">
+  <p class="font-dancing-script text-2xl text-pink-600 animate-pulse">
+    Hello my love, our world awaits... <span class="text-3xl">💞</span>
+  </p>
+</div>
+
+    </form>
+
+    <div id="welcome-message" class="hidden mt-6 p-4 bg-pink-50 rounded-xl text-center">
+      <p class="font-dancing-script text-2xl text-pink-600 animate-pulse">
+        Hello my love, our world awaits... <span class="text-3xl">💞</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Background music -->
+  <audio id="bg-music" loop>
+    <source src="assets/music/soft-love.mp3" type="audio/mpeg">
+  </audio>
+
+
+  <!-- Auth logic -->
+  <script src="js/auth.js"></script>
+
   <script>
-    function createHearts() {
-      const container = document.getElementById('hearts-container');
-      for(let i=0; i<30; i++) {
-        const heart = document.createElement('div');
-        heart.className = 'heart-bubble';
-        heart.innerHTML = '❤️';
-        heart.style.left = `${Math.random() * 100}vw`;
-        heart.style.animationDuration = `${5 + Math.random() * 10}s`;
-        heart.style.animationDelay = `${Math.random() * 5}s`;
-        container.appendChild(heart);
-      }
-    }
-    createHearts();
+    const bgMusic = document.getElementById('bg-music');
+    document.addEventListener('click', () => {
+      bgMusic.volume = 0.4;
+    });
   </script>
-  <script src="Love-Space/js/auth.js"></script>
 </body>
 </html>
